@@ -5,6 +5,7 @@ import numpy as np
 from numpy import array
 from tensorflow import keras
 from threading import Thread
+from sklearn.preprocessing import LabelEncoder
 
 
 mp_drawing = mp.solutions.drawing_utils
@@ -19,6 +20,10 @@ class TestLibras(Thread):
         self.frames = list()
         print("Model")
         self.model = keras.models.load_model('model')
+
+        print("Word Encoder")
+        self.encoder = LabelEncoder()
+        self.encoder.classes_ = np.load('words.encoder.npy', allow_pickle=True)
 
 
     def addFrame(self, results) -> bool:
@@ -51,18 +56,23 @@ class TestLibras(Thread):
                     self.frames = self.frames[(len(self.frames)-4):]
                     timeProcess = array([self.frames[0] + self.frames[1] + self.frames[2] + self.frames[3]])
 
-                    pred1 = self.model.predict(timeProcess)
+                    pred1 = list(self.model.predict(timeProcess)[0])
                     #pred2 = self.model.predict_classes(timeProcess)
 
+                    maxValue = max(pred1)
+                    wordEncode = pred1.index(maxValue)
+                    word = self.encoder.classes_[wordEncode]
+
                     print("----------------------------------------")
-                    print(str(np.argmax(pred1[0], axis=0)) + " - " + str(max(pred1[0])))
+                    
+                    print(word + " - " + str(maxValue))
                     #print(str(len(pred1[0])))
                     #print(str(pred1[0]))
                     #print(str(pred2))
 
             except:
                 print("Ops!!!!\n" + traceback.format_exc(1))
-                raise Exception('I know Python!')
+                raise Exception('Break')
                 
 
 
