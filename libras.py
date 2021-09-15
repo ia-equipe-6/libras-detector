@@ -30,7 +30,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 print("Holistic")
 with mp_holistic.Holistic(
-            #static_image_mode=False, 
+            static_image_mode=False, 
             model_complexity=2,
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5) as holistic:
@@ -42,7 +42,7 @@ with mp_holistic.Holistic(
         start = time.time()
         conected, image = capture.read()
         
-
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image.flags.writeable = False
         results = holistic.process(image)
 

@@ -65,7 +65,7 @@ class TestLibras(Thread):
 
                     print("----------------------------------------")
                     
-                    print(word + " - " + str(maxValue))
+                    print(str(wordEncode) + "-" + word + ": " + str(maxValue))
                     #print(str(len(pred1[0])))
                     #print(str(pred1[0]))
                     #print(str(pred2))
