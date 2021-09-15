@@ -2,6 +2,19 @@
 
 Esse código, faz a interpretação de libras a partir de uma webcam. Atualmente o treinamento contém apenas 10 palavras.
 
+Palavras suportadas:
+
+* Amor
+* Carro
+* Dança
+* Leite
+* Maça
+* Mãe
+* Outubro
+* Professor
+* Sábado
+* Vermelho
+
 ## Contribuidores
 
 <table>
