@@ -7,7 +7,11 @@ from testLibras import TestLibras
 import mediapipe as mp
 
 TIME = 1
-PARTS = 4
+PARTS = 5
+RESIZE = False
+
+DESIRED_HEIGHT = 200
+DESIRED_WIDTH = 200
 
 partTime = TIME / PARTS
 lastFrameTime = time.time()
@@ -20,7 +24,7 @@ mp_holistic = mp.solutions.holistic
 print("Capture")
 capture = cv2.VideoCapture(0)
 
-testLibras = TestLibras(partTime)
+testLibras = TestLibras(partTime, PARTS)
 
 def signal_handler(signal, frame):
     testLibras.isRunning = False
@@ -30,7 +34,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 print("Holistic")
 with mp_holistic.Holistic(
-            static_image_mode=False, 
+            static_image_mode=True, 
             model_complexity=2,
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5) as holistic:
@@ -41,6 +45,14 @@ with mp_holistic.Holistic(
     while (cv2.waitKey(1) < 0):
         start = time.time()
         conected, image = capture.read()
+
+        if (RESIZE):
+            h, w = image.shape[:2]
+
+            if h < w:
+                image = cv2.resize(image, (DESIRED_WIDTH, math.floor(h/(w/DESIRED_WIDTH))))
+            else:
+                image = cv2.resize(image, (math.floor(w/(h/DESIRED_HEIGHT)), DESIRED_HEIGHT))
         
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image.flags.writeable = False

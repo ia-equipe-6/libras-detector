@@ -11,21 +11,26 @@ from sklearn.preprocessing import LabelEncoder
 mp_drawing = mp.solutions.drawing_utils
 mp_holistic = mp.solutions.holistic
 WITH_Z = False
-TRACK_MODE = True
-MODEL_PATH = "model_track" if TRACK_MODE else "model"
-WORDS_ENCODER = "words_encoder_track" if TRACK_MODE else "words_encoder"
+POSE_MODE = True
+TRACK_MODE = False
+TRACK_SIMPLE = False
+MODEL_PATH = "model"
+WORDS_ENCODER = "words_encoder"
+#MODEL_PATH = "model_track" if TRACK_MODE else "model"
+#WORDS_ENCODER = "words_encoder_track" if TRACK_MODE else "words_encoder"
 
-ACTIVATION = "relu"
+#ACTIVATION = "relu"
 #ACTIVATION = "tanh"
 
-MODEL_PATH += "_" + ACTIVATION
-WORDS_ENCODER += "_" + ACTIVATION
+#MODEL_PATH += "_" + ACTIVATION
+#WORDS_ENCODER += "_" + ACTIVATION
 
 class TestLibras(Thread):
 
-    def __init__(self, partTime: float):
+    def __init__(self, partTime: float, parts: int):
         super().__init__()
         self.partTime = partTime
+        self.parts = parts
         self.isRunning = False
         self.frames = list()
         print("Model")
@@ -56,6 +61,20 @@ class TestLibras(Thread):
 
         return True
 
+    def calculateTrackDiff(self, framePos, framePos2):
+        diff = framePos - framePos2
+        
+        if (TRACK_SIMPLE):
+            if (diff > 0.001):
+                return 1.0
+            elif (diff < -0.001):
+                return -1.0
+            else:
+                return 0.0
+        else:
+            return diff
+
+
     def lineTrackMode(self, frame: list, frame1: list, frame2: list, frame3: list) -> list:
         size = len(frame)
 
@@ -67,17 +86,17 @@ class TestLibras(Thread):
             if (frame[pos] == 0.0 or frame1[pos] == 0.0):
                 trackList1.append(0.0)
             else:
-                trackList1.append(frame[pos] - frame1[pos])
+                trackList1.append(self.calculateTrackDiff(frame[pos], frame1[pos]))
 
             if (frame1[pos] == 0.0 or frame2[pos] == 0.0):
-                trackList1.append(0.0)
+                trackList2.append(0.0)
             else:
-                trackList2.append(frame1[pos] - frame2[pos])
+                trackList2.append(self.calculateTrackDiff(frame1[pos], frame2[pos]))
 
             if (frame2[pos] == 0.0 or frame3[pos] == 0.0):
                 trackList3.append(0.0)
             else:
-                trackList3.append(frame2[pos] - frame3[pos])
+                trackList2.append(self.calculateTrackDiff(frame2[pos], frame3[pos]))
 
         line = frame + trackList1 + trackList2 + trackList3
 
@@ -88,15 +107,19 @@ class TestLibras(Thread):
 
         while (self.isRunning):
             try:
-                if (len(self.frames) > 4):
-                    self.frames = self.frames[(len(self.frames)-4):]
+                if (len(self.frames) > self.parts):
+                    self.frames = self.frames[(len(self.frames) - self.parts):]
                     timeProcess = list()
 
                     if (TRACK_MODE):
                         timeProcess = array([self.lineTrackMode(self.frames[3], self.frames[2], self.frames[1], self.frames[0])])
                         #timeProcess = array([self.lineTrackMode(self.frames[0], self.frames[1], self.frames[2], self.frames[3])])
                     else:
-                        timeProcess = array([self.frames[3] + self.frames[2] + self.frames[1] + self.frames[0]])
+                        for f in range(self.parts - 1, -1, -1):
+                            timeProcess += self.frames[f]
+                        
+                        timeProcess = array([timeProcess])
+                        #timeProcess = array([self.frames[3] + self.frames[2] + self.frames[1] + self.frames[0]])
                         #timeProcess = array([self.frames[0] + self.frames[1] + self.frames[2] + self.frames[3]])
 
                     pred1 = list(self.model.predict(timeProcess)[0])
